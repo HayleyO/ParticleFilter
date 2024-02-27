@@ -38,14 +38,19 @@ class Particle_Filter():
             sim_score, _ = structural_similarity(observation_gray, reference_gray, data_range=256, full=True)
             similarity += (sim_score*100)
             weights.append(similarity)
-        #weights = np.divide(weights, np.sum(weights)) # Normalization
+        weights_probs = (weights - min(weights)) / (max(weights) - min(weights)) # Normalization
         lower_bound = 1
         upper_bound = 25
-        weights = [lower_bound + (x - min(weights)) * (upper_bound - lower_bound) / (max(weights) - min(weights)) for x in weights]
-        return weights
+        weights_visible = [lower_bound + (x - min(weights)) * (upper_bound - lower_bound) / (max(weights) - min(weights)) for x in weights]
+        return weights_probs, weights_visible
 
     def weighted_importance_sampling(self, weights):
-        pass
+        cumulative_sum = np.cumsum(weights)
+        cumulative_sum[-1] = 1. # avoid round-off error
+        indexes = np.searchsorted(cumulative_sum, np.random.random(self.N))
+
+        self.particles[:] = np.asarray(self.particles[indexes])
+        
 
     def move_particles(self, movement):
         pass
